@@ -1,8 +1,8 @@
 run_simulation_st <- function(c_trt){
   
-  if (!require('pacman')) install.packages('pacman'); library(pacman) 
+  #if (!require('pacman')) install.packages('pacman'); library(pacman) 
   #p_load_gh("DARTH-git/darthtools") 
-  p_load("devtools", "dplyr", "scales", "ellipse", "ggplot2", "lazyeval", "igraph", "truncnorm", "ggraph", "reshape2", "stringr", "dampack")
+  #p_load("devtools", "dplyr", "scales", "ellipse", "ggplot2", "lazyeval", "igraph", "truncnorm", "ggraph", "reshape2", "stringr", "dampack")
   
   input_parameters <- function(c_trt, modifier_mild_moderate){
     cycle_length   <- 1/365  # cycle length equal to one year
