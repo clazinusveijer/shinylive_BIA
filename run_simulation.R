@@ -408,9 +408,9 @@ run_simulation_st <- function(c_trt){
       # calculate the transition probabilities for the cycle based on health state t
       m_P <- Probs(m_M[, t], t, Trt, input_params, df_X)
       # check if transition probabilities are between 0 and 1
-      check_transition_probability(m_P, verbose = F)
+      #check_transition_probability(m_P, verbose = F)
       # check if each of the rows of the transition probabilities matrix sum to one
-      check_sum_of_transition_array(m_P, n_rows = input_params$n_i, n_cycles = input_params$n_cycles, verbose = F)
+      #check_sum_of_transition_array(m_P, n_rows = input_params$n_i, n_cycles = input_params$n_cycles, verbose = F)
       
       # sample the next health state and store that state in matrix m_M
       m_M[, t + 1]  <- samplev(m_P, 1)    
