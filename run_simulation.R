@@ -1,10 +1,6 @@
-run_simulation_st <- function(c_trt){
+run_simulation_st <- function(n_i, p_i_mild, p_i_moderate, p_i_severe, r_i_MV, c_trt, c_MV, c_ICU, c_GW, c_REC, modifier_mild_moderate, modifier_moderate_severe, modifier_mild_severe, modifier_MV_ICU_mild, modifier_MV_ICU_moderate, modifier_MV_ICU_severe){
   
-  #if (!require('pacman')) install.packages('pacman'); library(pacman) 
-  #p_load_gh("DARTH-git/darthtools") 
-  #p_load("devtools", "dplyr", "scales", "ellipse", "ggplot2", "lazyeval", "igraph", "truncnorm", "ggraph", "reshape2", "stringr", "dampack")
-  
-  input_parameters <- function(c_trt, modifier_mild_moderate){
+  input_parameters <- function(n_i, p_i_mild, p_i_moderate, p_i_severe, r_i_MV, c_trt, c_MV, c_ICU, c_GW, c_REC, modifier_mild_moderate, modifier_moderate_severe, modifier_mild_severe, modifier_MV_ICU_mild, modifier_MV_ICU_moderate, modifier_MV_ICU_severe){
     cycle_length   <- 1/365  # cycle length equal to one year
     n_cycles       <- 60    # time horizon, number of cycles
     v_names_states <- c("MV_mild", "ICU_mild", "GW_mild", "REC_mild",   "D_mild","MV_moderate","ICU_moderate", "GW_moderate",  "REC_moderate", "D_moderate","MV_severe","ICU_severe", "GW_severe", "REC_severe", "D_severe")
@@ -13,32 +9,33 @@ run_simulation_st <- function(c_trt){
                        "FX06 treatment") 
     n_str         <- length(v_names_str)     # number of strategies
     
-    df_prob_mv_discont <- read.csv("https://raw.githubusercontent.com/clazinusveijer/datasets_CEA_IXION/refs/heads/main/df_prob_mv_discont.csv", sep = ',')
-    n_i            <- 2377
-    p_i_mild       <- 0.300
-    p_i_moderate   <- 0.465
-    p_i_severe     <- 0.234
+    df_prob_mv_discont <- read.csv("https://raw.githubusercontent.com/clazinusveijer/shinylive_BIA/refs/heads/main/df_prob_mv_discont.csv", sep = ',')
+    
+    n_i            <- n_i 
+    p_i_mild       <- p_i_mild 
+    p_i_moderate   <- p_i_moderate 
+    p_i_severe     <- p_i_severe
     n_i_mild       <- round(n_i * p_i_mild,0)
     n_i_moderate   <- round(n_i * p_i_moderate,0)
     n_i_severe     <- n_i - n_i_mild - n_i_moderate #round(n_i * p_i_severe,0)
     
     # initial number of patients per health state
-    r_i_MV  <- 0.856
+    r_i_MV  <- r_i_MV #0.856
     r_i_ICU <- 1-r_i_MV # 0.144 
     n_i_mild_MV  <- round(n_i_mild*r_i_MV,0)
-    n_i_mild_ICU <- round(n_i_mild*r_i_ICU,0)
+    n_i_mild_ICU <- n_i_mild - n_i_mild_MV #round(n_i_mild*r_i_ICU,0)
     n_i_moderate_MV  <- round(n_i_moderate*r_i_MV,0)
-    n_i_moderate_ICU <- round(n_i_moderate*r_i_ICU,0)
+    n_i_moderate_ICU <- n_i_moderate - n_i_moderate_MV #round(n_i_moderate*r_i_ICU,0)
     n_i_severe_MV  <- round(n_i_severe*r_i_MV,0)
-    n_i_severe_ICU <- round(n_i_severe*r_i_ICU,0)
+    n_i_severe_ICU <- n_i_severe - n_i_severe_MV #round(n_i_severe*r_i_ICU,0)
     
-    modifier_mild_moderate  <- 0.1 #modifier_mild_moderate
-    modifier_moderate_severe<- 0.1 #modifier_moderate_severe
-    modifier_mild_severe    <- 0.1 #modifier_mild_severe
+    modifier_mild_moderate  <- modifier_mild_moderate
+    modifier_moderate_severe<- modifier_moderate_severe
+    modifier_mild_severe    <- modifier_mild_severe
     
-    modifier_MV_ICU_mild      <- 0.1 #modifier_MV_ICU_mild
-    modifier_MV_ICU_moderate  <- 0.1 #modifier_MV_ICU_moderate
-    modifier_MV_ICU_severe    <- 0.1 #modifier_MV_ICU_severe
+    modifier_MV_ICU_mild      <- modifier_MV_ICU_mild
+    modifier_MV_ICU_moderate  <- modifier_MV_ICU_moderate
+    modifier_MV_ICU_severe    <- modifier_MV_ICU_severe
     
     # Disease progression up to 7 days post-diagnosis of ARDS
     d_progression_period    <- 7
@@ -120,10 +117,10 @@ run_simulation_st <- function(c_trt){
     p_GW_REC_severe         <- 1 - exp(-r_GW_severe)
     
     #### Costs 
-    c_MV      <- 2225 # Each additional day on mechanically ventilated ICU patients
-    c_ICU     <- 930 # Each additional day on non-mechanically ventilated ICU patients
-    c_GW      <- 420  # Each additional day on the general ward for non-ICU patients
-    c_REC     <- 0
+    c_MV      <- c_MV  #2225 # Each additional day on mechanically ventilated ICU patients
+    c_ICU     <- c_ICU #930 # Each additional day on non-mechanically ventilated ICU patients
+    c_GW      <- c_GW  #420  # Each additional day on the general ward for non-ICU patients
+    c_REC     <- c_REC #0
     c_D       <- 0     # annual cost of being dead
     c_trt     <- c_trt # five-day treatment 600/5
     df_c      <- data.frame(type = c("c_MV", "c_ICU", "c_GW", "c_REC", "c_D", "c_trt"), cost = c(c_MV, c_ICU, c_GW, c_REC, c_D, c_trt))
@@ -365,7 +362,7 @@ run_simulation_st <- function(c_trt){
     return(t(m_p_t))
   }
   
-  Costs <- function (M_t, Trt, input_params, df_X, df_c) {
+  Costs <- function (M_t, Trt, input_params, df_X, df_c) { # c_MV, c_ICU, c_GW, c_REC, c_D, c_trt) {
     # Arguments:
     # M_t: health state occupied at cycle t (character variable)
     # Returns: 
@@ -386,11 +383,16 @@ run_simulation_st <- function(c_trt){
     c_t[M_t %in% c("GW_mild", "GW_moderate", "GW_severe")] <- if_else(Trt == "FX06 treatment" & df_X$trt_YN == 1, df_c$cost[which(df_c$type == "c_GW")] + df_c$cost[which(df_c$type == "c_trt")], df_c$cost[which(df_c$type == "c_GW")])
     c_t[M_t %in% c("REC_mild", "REC_moderate", "REC_severe")]  <- df_c$cost[which(df_c$type == "c_REC")] 
     c_t[M_t %in% c("D_mild", "D_moderate", "D_severe")]    <- df_c$cost[which(df_c$type == "c_D")]  
+    #c_t[M_t %in% c("MV_mild", "MV_moderate", "MV_severe")] <- if_else(Trt == "FX06 treatment" & df_X$trt_YN == 1, c_MV + c_trt, c_MV)
+    #c_t[M_t %in% c("ICU_mild", "ICU_moderate", "ICU_severe")] <- if_else(Trt == "FX06 treatment" & df_X$trt_YN == 1, c_ICU + c_trt, c_ICU)
+    #c_t[M_t %in% c("GW_mild", "GW_moderate", "GW_severe")] <- if_else(Trt == "FX06 treatment" & df_X$trt_YN == 1, c_GW + c_trt, c_GW)
+    #c_t[M_t %in% c("REC_mild", "REC_moderate", "REC_severe")]  <- c_REC  
+    #c_t[M_t %in% c("D_mild", "D_moderate", "D_severe")]    <- c_D  
     
     return(c_t)  # return costs accrued this cycle
   }
   
-  MicroSim <- function(Trt, seed, input_params, df_X, df_c) {
+  MicroSim <- function(Trt, seed, input_params, df_X, df_c) { #c_MV, c_ICU, c_GW, c_REC, c_D, c_trt) {
     
     set.seed(seed)
     n_states <- length(input_params$v_names_states) # the number of health states
@@ -401,7 +403,7 @@ run_simulation_st <- function(c_trt){
     
     m_M [, 1] <- as.character(input_params$df_X$M_init) # initial health state at cycle 0 for individual i
     # calculate costs per individual during cycle 0
-    m_C[, 1]  <- Costs(m_M[, 1], Trt=Trt, input_params = input_params, df_X = df_X, df_c = df_c)     
+    m_C[, 1]  <- Costs(m_M[, 1], Trt=Trt, input_params = input_params, df_X = df_X, df_c = df_c) # c_MV = c_MV, c_ICU = c_ICU, c_GW = c_GW, c_REC = c_REC, c_D = c_D, c_trt = c_trt)     
     
     # open a loop for time running cycles 1 to n_cycles 
     for (t in 1:input_params$n_cycles) {
@@ -415,7 +417,7 @@ run_simulation_st <- function(c_trt){
       # sample the next health state and store that state in matrix m_M
       m_M[, t + 1]  <- samplev(m_P, 1)    
       # calculate costs per individual during cycle t + 1
-      m_C[, t + 1]  <- Costs(m_M[, t + 1], Trt=Trt, input_params = input_params, df_X = df_X, df_c = df_c)     
+      m_C[, t + 1]  <- Costs(m_M[, t + 1], Trt=Trt, input_params = input_params, df_X = df_X, df_c = df_c) #c_MV = c_MV, c_ICU = c_ICU, c_GW = c_GW, c_REC = c_REC, c_D = c_D, c_trt = c_trt)     
       
       # update time since illness onset for t + 1 
       df_X$mild_moderate_YN <- df_X$mild_severe_YN <- if_else(t+1 < 7 & df_X$Severity == "mild", 1, 2)
@@ -442,22 +444,47 @@ run_simulation_st <- function(c_trt){
     } # close the loop for the time points 
     
     tc      <- rowSums(m_C)   # total cost per individual
-    tc_hat  <- mean(tc)       # average cost 
+    tc_hat  <- mean(tc)       # average cost
+    tc_tot  <- sum(tc)
     # store the results from the simulation in a list
-    results <- list(df_X = df_X, m_M = m_M, m_C = m_C, tc = tc, tc_hat = tc_hat)   
+    results <- list(df_X = df_X, m_M = m_M, m_C = m_C, tc = tc, tc_hat = tc_hat, tc_tot = tc_tot)   
     
     return(results)  # return the results
   }
   
-  run_simulation <- function(c_trt){
-    input_params <- input_parameters(c_trt=c_trt)
+  plot_trace_microsim_st <- function(m_M, input_params, v_names_states) {
+    # plot the distribution of the population across health states over time (trace)
+    # count the number of individuals in each health state at each cycle
+    m_TR <- t(apply(m_M, 2, function(x) table(factor(x, levels = input_params$v_names_states, ordered = TRUE))))
+    v_healthstates <- unique(unlist(m_TR))
+    
+    # m_TR <- m_TR / n_i                                 # calculate the proportion of individuals
+    m_TR <- m_TR / nrow(m_M)
+    colnames(m_TR) <- input_params$v_names_states                  # name the rows of the matrix
+    rownames(m_TR) <- paste("Cycle", 0:(ncol(m_M)-1), sep = " ") # name the columns of the matrix
+    # Plot trace of first health state
+    plot(0:(ncol(m_M)-1), m_TR[, 1], type = "l", main = "Health state trace short-term model",
+         ylim = c(0, 1), ylab = "Proportion of cohort", xlab = "day")
+    # add a line for each additional state
+    aantal <- input_params$n_states
+    for (aantal in 2:length(input_params$v_names_states)) {
+      lines(0:(ncol(m_M)-1), m_TR[, input_params$n_states], col = input_params$n_states)   # adds a line to current plot
+    }
+    legend("topright", v_healthstates, col = 1:length(v_healthstates), # add a legend to current plot
+           lty = rep(1, length(v_healthstates)), bty = "n", cex = 0.65)
+  }
+  
+  run_simulation <- function(n_i, p_i_mild, p_i_moderate, p_i_severe, r_i_MV, c_trt, c_MV, c_ICU, c_GW, c_REC, modifier_mild_moderate, modifier_moderate_severe, modifier_mild_severe, modifier_MV_ICU_mild, modifier_MV_ICU_moderate, modifier_MV_ICU_severe){
+    input_params <- input_parameters(n_i, p_i_mild, p_i_moderate, p_i_severe, r_i_MV, c_trt, c_MV, c_ICU, c_GW, c_REC, modifier_mild_moderate, modifier_moderate_severe, modifier_mild_severe, modifier_MV_ICU_mild, modifier_MV_ICU_moderate, modifier_MV_ICU_severe)
     df_X <- as.data.frame(input_params$df_X)
     df_c <- as.data.frame(input_params$df_c)
-    outcomes_SoC   <- MicroSim(Trt="Standard of care", seed = 77, input_params = input_params, df_X = df_X, df_c = df_c)
+    outcomes_SoC   <- MicroSim(Trt="Standard of care", seed = 77, input_params = input_params, df_X = df_X, df_c = df_c) 
     outcomes_trt   <- MicroSim(Trt="FX06 treatment", seed = 77, input_params = input_params, df_X = df_X, df_c = df_c)
-    outcomes <- list(outcomes_SoC = outcomes_SoC, outcomes_trt = outcomes_trt)
+    #traceplot_soc  <- plot_trace_microsim_st(outcomes_SoC$m_M, input_params = input_params, v_names_states = input_params$v_names_states)
+    outcomes <- list(outcomes_SoC = outcomes_SoC, outcomes_trt = outcomes_trt)#, plot_trace_soc = traceplot_soc)
     return(outcomes)
   }
-  outcomes <- run_simulation(c_trt)
-  return(outcomes)
+  
+  outcomes_st <- run_simulation(n_i = n_i, p_i_mild = p_i_mild, p_i_moderate = p_i_moderate, p_i_severe = p_i_severe, r_i_MV = r_i_MV, c_trt = c_trt, c_MV = c_MV, c_ICU = c_ICU, c_GW = c_GW, c_REC = c_REC, modifier_mild_moderate = modifier_mild_moderate, modifier_moderate_severe = modifier_moderate_severe, modifier_mild_severe = modifier_mild_severe, modifier_MV_ICU_mild = modifier_MV_ICU_mild, modifier_MV_ICU_moderate = modifier_MV_ICU_moderate, modifier_MV_ICU_severe = modifier_MV_ICU_severe)
+  return(outcomes_st)
 }
